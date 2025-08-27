@@ -7,11 +7,11 @@ services:
     envVars:
       - key: OPENAI_API_KEY
         sync: false
-    
-  - type: static
-    name: sugya-app-frontend  
+
+static:
+  - name: sugya-app-frontend
     buildCommand: "npm install && npm run build"
-    staticPublishPath: ./dist
+    publishPath: ./dist
     envVars:
       - key: VITE_API_URL
         value: https://sugya-app-backend.onrender.com
