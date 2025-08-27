@@ -8,11 +8,9 @@ services:
       - key: OPENAI_API_KEY
         sync: false
     
-  - type: web
+  - type: static
     name: sugya-app-frontend  
-    env: node
     buildCommand: "npm install && npm run build"
-    startCommand: "npm run start"
     staticPublishPath: ./dist
     envVars:
       - key: VITE_API_URL
