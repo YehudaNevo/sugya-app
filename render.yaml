@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: sugya-app-backend
+    env: python
+    buildCommand: "cd backend && pip install -r requirements.txt"
+    startCommand: "cd backend && python main.py"
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+    
+  - type: web
+    name: sugya-app-frontend  
+    env: node
+    buildCommand: "npm install && npm run build"
+    startCommand: "npm run start"
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://sugya-app-backend.onrender.com
