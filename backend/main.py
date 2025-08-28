@@ -1,11 +1,13 @@
 
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, validator
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, field_validator
 from openai import OpenAI
 import os
 import re
 import time
+import json
 from collections import defaultdict
 from dotenv import load_dotenv
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -36,24 +38,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Security constants
-MAX_MESSAGE_LENGTH = 1000
-MAX_MESSAGES_PER_REQUEST = 20
+# Security constants - more flexible
+MAX_MESSAGE_LENGTH = 5000
+MAX_MESSAGES_PER_REQUEST = 50
 SUSPICIOUS_PATTERNS = [
-    r"ignore\s+previous\s+instructions?",
-    r"system\s*prompt",
-    r"you\s+are\s+now",
-    r"forget\s+everything",
-    r"new\s+instructions?",
-    r"override\s+your",
-    r"jailbreak",
-    r"developer\s+mode",
+    r"ignore\s+all\s+previous\s+instructions",
+    r"you\s+are\s+now\s+chatgpt",
+    r"forget\s+everything\s+above",
+    r"new\s+system\s+instructions",
+    r"override\s+system\s+prompt",
+    r"jailbreak\s+mode",
 ]
 
 class ChatRequest(BaseModel):
     messages: list
     
-    @validator('messages')
+    @field_validator('messages')
+    @classmethod
     def validate_messages(cls, messages):
         if not messages or len(messages) > MAX_MESSAGES_PER_REQUEST:
             raise ValueError(f"Messages must be between 1 and {MAX_MESSAGES_PER_REQUEST}")
@@ -96,8 +97,8 @@ def check_session_limits(client_ip: str) -> bool:
         session["count"] = 0
         session["last_reset"] = current_time
     
-    # Limit: 100 requests per hour per IP
-    if session["count"] >= 100:
+    # Limit: 1000 requests per hour per IP
+    if session["count"] >= 1000:
         return False
     
     session["count"] += 1
@@ -126,16 +127,41 @@ def filter_system_messages(messages: list) -> list:
 async def root():
     return {"message": "Sugya App Backend API"}
 
+async def generate_stream(filtered_messages: list):
+    """Generate streaming response from OpenAI"""
+    try:
+        
+        stream = client.chat.completions.create(
+            model="gpt-4o",
+            messages=filtered_messages,
+            max_tokens=1000,
+            temperature=0.7,
+            stream=True
+        )
+        
+        for chunk in stream:
+            if chunk.choices[0].delta.content is not None:
+                content = chunk.choices[0].delta.content
+                print(f"Streaming chunk: {content}")  # Debug log
+                yield f"data: {json.dumps({'content': content, 'done': False})}\n\n"
+        
+        # Send completion signal
+        yield f"data: {json.dumps({'content': '', 'done': True})}\n\n"
+        
+    except Exception as e:
+        print(f"Error in streaming: {e}")
+        yield f"data: {json.dumps({'error': str(e), 'done': True})}\n\n"
+
 @app.post("/api/chat")
-@limiter.limit("10/minute")  # Rate limit: 10 requests per minute per IP
+@limiter.limit("100/minute")  # Rate limit: 100 requests per minute per IP
 async def chat(request: Request, chat_request: ChatRequest):
     if not client.api_key:
         raise HTTPException(status_code=500, detail="OpenAI API key not set")
 
-    # Get client IP and check session limits
+    # Get client IP and check session limits (disabled for testing)
     client_ip = get_client_ip(request)
-    if not check_session_limits(client_ip):
-        raise HTTPException(status_code=429, detail="Too many requests. Please try again later.")
+    # if not check_session_limits(client_ip):
+    #     raise HTTPException(status_code=429, detail="Too many requests. Please try again later.")
 
     try:
         # Filter and validate messages
@@ -146,15 +172,55 @@ async def chat(request: Request, chat_request: ChatRequest):
 
         # Additional safety: limit total tokens
         total_chars = sum(len(msg["content"]) for msg in filtered_messages)
+        if total_chars > 20000:
+            raise HTTPException(status_code=400, detail="Request too large")
+
+        # Return streaming response
+        return StreamingResponse(
+            generate_stream(filtered_messages),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Headers": "*",
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error calling OpenAI: {e}")
+        raise HTTPException(status_code=500, detail="Failed to process request")
+
+# Add a non-streaming endpoint for fallback
+@app.post("/api/chat-simple")
+@limiter.limit("100/minute")
+async def chat_simple(request: Request, chat_request: ChatRequest):
+    """Non-streaming version for testing"""
+    if not client.api_key:
+        raise HTTPException(status_code=500, detail="OpenAI API key not set")
+
+    # Get client IP and check session limits (disabled for testing)
+    client_ip = get_client_ip(request)
+    # if not check_session_limits(client_ip):
+    #     raise HTTPException(status_code=429, detail="Too many requests. Please try again later.")
+
+    try:
+        filtered_messages = filter_system_messages(chat_request.messages)
+        
+        if not filtered_messages:
+            raise HTTPException(status_code=400, detail="No valid messages provided")
+
+        total_chars = sum(len(msg["content"]) for msg in filtered_messages)
         if total_chars > 5000:
             raise HTTPException(status_code=400, detail="Request too large")
 
         completion = client.chat.completions.create(
             model="gpt-4o",
             messages=filtered_messages,
-            max_tokens=1000,  # Limit response length
-            temperature=0.7,
-            timeout=30  # 30 second timeout
+            max_tokens=1000,
+            temperature=0.7
         )
         
         return completion.choices[0].message

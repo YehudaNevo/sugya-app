@@ -286,6 +286,26 @@ body {
 .loading-dots span:nth-child(3) { animation-delay: .4s; }
 @keyframes blink { 0% { opacity: .2; } 20% { opacity: 1; } 100% { opacity: .2; } }
 
+/* Streaming indicator */
+.message.streaming {
+  position: relative;
+}
+
+.message.streaming::after {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 1em;
+  background-color: var(--primary-color);
+  margin-left: 2px;
+  animation: cursor-blink 1s infinite;
+}
+
+@keyframes cursor-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
 /* Mobile responsive design */
 @media (max-width: 768px) {
   .app-header {

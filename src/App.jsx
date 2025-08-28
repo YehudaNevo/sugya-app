@@ -1,6 +1,7 @@
 // src/App.jsx
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import './App.css';
 import { learningContext, systemPromptTemplate } from './context.js';
 
@@ -9,6 +10,14 @@ function App() {
   const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [mode, setMode] = useState('chavruta'); // 'chavruta', 'abaye', 'rava'
+  const chatWindowRef = useRef(null);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (chatWindowRef.current) {
+      chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   // פונקציה לבניית הפרומפט הסופי על בסיס המצב
   const buildFinalPrompt = () => {
@@ -67,6 +76,17 @@ function App() {
 
     const systemMessage = { role: 'system', content: buildFinalPrompt() };
 
+    // Add placeholder for streaming message
+    const streamingMessageId = Date.now();
+    const streamingMessage = { 
+      role: 'assistant', 
+      content: '', 
+      mode: mode,
+      isStreaming: true,
+      id: streamingMessageId
+    };
+    setMessages(prev => [...prev, streamingMessage]);
+
     try {
       const apiUrl = import.meta.env.VITE_API_URL || '';
       const response = await fetch(`${apiUrl}/api/chat`, {
@@ -76,15 +96,81 @@ function App() {
       });
 
       if (!response.ok) throw new Error('Network response was not ok');
-      const aiMessage = await response.json();
       
-      // הוספת המצב הנוכחי להודעה של ה-AI כדי שנוכל לעצב אותה בהתאם
-      const taggedAiMessage = { ...aiMessage, mode: mode };
-      setMessages(prev => [...prev, taggedAiMessage]);
+      // Handle streaming response
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedContent = '';
+      let buffer = '';
+
+      console.log('Starting to read stream...'); // Debug log
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) {
+          console.log('Stream finished');
+          break;
+        }
+
+        const chunk = decoder.decode(value, { stream: true });
+        buffer += chunk;
+        console.log('Raw chunk:', chunk); // Debug log
+        
+        // Process complete lines from buffer
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Keep incomplete line in buffer
+        
+        for (const line of lines) {
+          if (line.trim() && line.startsWith('data: ')) {
+            try {
+              const jsonStr = line.slice(6).trim();
+              console.log('Parsing JSON:', jsonStr); // Debug log
+              
+              const data = JSON.parse(jsonStr);
+              console.log('Parsed data:', data); // Debug log
+              
+              if (data.error) {
+                console.error('Stream error:', data.error);
+                throw new Error(data.error);
+              }
+              
+              if (data.content !== undefined) {
+                accumulatedContent += data.content;
+                console.log('Accumulated:', accumulatedContent); // Debug log
+                
+                // Update the streaming message immediately and force render
+                flushSync(() => {
+                  setMessages(prev => prev.map(msg => 
+                    msg.id === streamingMessageId 
+                      ? { ...msg, content: accumulatedContent }
+                      : msg
+                  ));
+                });
+              }
+              
+              if (data.done) {
+                console.log('Stream marked as done');
+                // Mark streaming as complete
+                setMessages(prev => prev.map(msg => 
+                  msg.id === streamingMessageId 
+                    ? { ...msg, isStreaming: false }
+                    : msg
+                ));
+                return; // Exit the function
+              }
+            } catch (parseError) {
+              console.error('Error parsing stream data:', parseError, 'Line:', line);
+            }
+          }
+        }
+      }
 
     } catch (error) {
       console.error("Error fetching AI response:", error);
-      setMessages(prev => [...prev, { role: 'assistant', content: 'אופס, קרתה שגיאה בתקשורת.', mode: 'chavruta' }]);
+      // Remove the streaming message and add error message
+      setMessages(prev => prev.filter(msg => msg.id !== streamingMessageId)
+        .concat([{ role: 'assistant', content: 'אופס, קרתה שגיאה בתקשורת.', mode: 'chavruta' }])
+      );
     } finally {
       setIsLoading(false);
     }
@@ -107,18 +193,24 @@ function App() {
         </nav>
       </header>
       
-      <main className="chat-window">
+      <main className="chat-window" ref={chatWindowRef}>
         {messages.map((msg, index) => (
-          <div key={index} className={`message-wrapper ${msg.role === 'user' ? 'user-message' : 'ai-message'}`}>
+          <div key={msg.id || index} className={`message-wrapper ${msg.role === 'user' ? 'user-message' : 'ai-message'}`}>
             {msg.role === 'assistant' && msg.mode !== 'chavruta' && (
               <span className="persona-tag">{msg.mode === 'abaye' ? 'אביי' : 'רבא'}</span>
             )}
-            <div className="message">
+            <div className={`message ${msg.isStreaming ? 'streaming' : ''}`}>
               <p>{msg.content}</p>
             </div>
           </div>
         ))}
-        {isLoading && <div className="message-wrapper ai-message"><div className="message"><p className="loading-dots"><span>.</span><span>.</span><span>.</span></p></div></div>}
+        {isLoading && !messages.some(msg => msg.isStreaming) && (
+          <div className="message-wrapper ai-message">
+            <div className="message">
+              <p className="loading-dots"><span>.</span><span>.</span><span>.</span></p>
+            </div>
+          </div>
+        )}
       </main>
 
       <footer className="chat-form-wrapper">
