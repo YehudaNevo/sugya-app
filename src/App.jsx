@@ -98,14 +98,12 @@ function App() {
   return (
     <div className="app-container" dir="rtl">
       <header className="app-header">
-        <div className="header-top">
-          <h1>חברותא דיגיטלית: ייאוש שלא מדעת</h1>
-          <button onClick={clearConversation} className="clear-button">התחל מחדש</button>
-        </div>
+        <h1>חברותא דיגיטלית: ייאוש שלא מדעת</h1>
         <nav className="persona-selector">
           <button onClick={() => setMode('chavruta')} className={mode === 'chavruta' ? 'active' : ''}>חברותא כללי</button>
           <button onClick={() => setMode('abaye')} className={mode === 'abaye' ? 'active' : ''}>שיחה עם אביי</button>
           <button onClick={() => setMode('rava')} className={mode === 'rava' ? 'active' : ''}>שיחה עם רבא</button>
+          <button onClick={clearConversation} className="clear-button">התחל מחדש</button>
         </nav>
       </header>
       
