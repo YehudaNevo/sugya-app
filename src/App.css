@@ -1,18 +1,20 @@
 /* src/App.css */
 
-/* הגדרות בסיס וצבעים - Apple-inspired */
+/* הגדרות בסיס וצבעים - Clean minimal cream & blue */
 :root {
-  --background-color: #F2F2F7;
-  --text-color: #1D1D1F;
-  --text-secondary: #86868B;
-  --primary-color: #007AFF;
-  --user-bubble-color: #007AFF;
-  --ai-bubble-color: #F2F2F7;
-  --border-color: #D1D1D6;
+  --background-color: #FEFEFE;
+  --text-color: #2D3748;
+  --text-secondary: #718096;
+  --primary-color: #4A90E2;
+  --primary-hover: #357ABD;
+  --user-bubble-color: #E3F2FD;
+  --ai-bubble-color: #F8F9FA;
+  --border-color: #E2E8F0;
   --input-bg: #FFFFFF;
   --card-bg: #FFFFFF;
+  --cream-accent: #FFFBF7;
   --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --shadow-medium: 0 2px 8px rgba(0, 0, 0, 0.1);
   --border-radius: 12px;
   --font-main: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
 }
@@ -50,9 +52,7 @@ body {
 .app-header {
   padding: 1.25rem 1rem 1rem 1rem;
   background: var(--card-bg);
-  border-bottom: 0.5px solid var(--border-color);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-color);
   z-index: 10;
   flex-shrink: 0;
 }
@@ -77,33 +77,29 @@ body {
 .persona-selector button {
   font-size: 0.9rem;
   padding: 0.5rem 1.25rem;
-  border: none;
+  border: 1px solid var(--border-color);
   border-radius: 20px;
-  background-color: var(--ai-bubble-color);
+  background: var(--card-bg);
   color: var(--text-color);
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  transition: all 0.2s ease;
   min-height: 36px;
   font-weight: 500;
-  letter-spacing: -0.005em;
-  box-shadow: var(--shadow-light);
 }
 
 .persona-selector button:hover {
-  background-color: #E5E5EA;
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-medium);
+  background: var(--cream-accent);
+  border-color: var(--primary-color);
 }
 
 .persona-selector button.active {
-  background-color: var(--primary-color);
+  background: var(--primary-color);
   color: white;
-  box-shadow: 0 2px 12px rgba(0, 122, 255, 0.3);
+  border-color: var(--primary-color);
 }
 
 .persona-selector button:active {
-  transform: translateY(0);
-  transition: all 0.1s ease;
+  transform: scale(0.98);
 }
 
 /* חלון הצ'אט */
@@ -155,18 +151,17 @@ body {
   align-self: flex-end;
 }
 .user-message .message {
-  background-color: var(--user-bubble-color);
+  background: var(--primary-color);
   color: white;
-  box-shadow: 0 1px 3px rgba(0, 122, 255, 0.2);
 }
 
 .ai-message {
   align-self: flex-start;
 }
 .ai-message .message {
-  background-color: var(--ai-bubble-color);
+  background: var(--ai-bubble-color);
   color: var(--text-color);
-  box-shadow: var(--shadow-light);
+  border: 1px solid var(--border-color);
 }
 
 .persona-tag {
@@ -180,10 +175,8 @@ body {
 .chat-form-wrapper {
   padding: 1rem;
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
-  border-top: 0.5px solid var(--border-color);
-  background-color: var(--card-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border-color);
+  background: var(--card-bg);
   flex-shrink: 0;
 }
 
@@ -198,23 +191,19 @@ body {
 .chat-form input {
   flex-grow: 1;
   padding: 0.875rem 1.125rem;
-  border: 0.5px solid var(--border-color);
+  border: 1px solid var(--border-color);
   border-radius: 25px;
   font-size: 1rem;
   font-family: var(--font-main);
   background-color: var(--input-bg);
   color: var(--text-color);
-  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  transition: border-color 0.2s ease;
   min-height: 50px;
-  box-shadow: var(--shadow-light);
-  letter-spacing: -0.003em;
 }
 
 .chat-form input:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
-  transform: translateY(-1px);
 }
 
 .chat-form input::placeholder {
@@ -225,33 +214,26 @@ body {
   padding: 0.875rem 1.5rem;
   border: none;
   border-radius: 25px;
-  background-color: var(--primary-color);
+  background: var(--primary-color);
   color: white;
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  transition: background-color 0.2s ease;
   min-height: 50px;
-  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
-  letter-spacing: -0.003em;
 }
 
 .chat-form button:hover:not(:disabled) {
-  background-color: #0056D2;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(0, 122, 255, 0.4);
+  background: var(--primary-hover);
 }
 
 .chat-form button:active:not(:disabled) {
-  transform: translateY(0);
-  transition: all 0.1s ease;
+  transform: scale(0.98);
 }
 
 .chat-form button:disabled {
-  background-color: var(--text-secondary);
+  background: var(--text-secondary);
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
 }
 
 /* אנימציית טעינה */
