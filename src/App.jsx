@@ -90,10 +90,18 @@ function App() {
     }
   };
 
+  const clearConversation = () => {
+    setMessages([]);
+    setUserInput('');
+  };
+
   return (
     <div className="app-container" dir="rtl">
       <header className="app-header">
-        <h1>חברותא דיגיטלית: ייאוש שלא מדעת</h1>
+        <div className="header-top">
+          <h1>חברותא דיגיטלית: ייאוש שלא מדעת</h1>
+          <button onClick={clearConversation} className="clear-button">התחל מחדש</button>
+        </div>
         <nav className="persona-selector">
           <button onClick={() => setMode('chavruta')} className={mode === 'chavruta' ? 'active' : ''}>חברותא כללי</button>
           <button onClick={() => setMode('abaye')} className={mode === 'abaye' ? 'active' : ''}>שיחה עם אביי</button>
