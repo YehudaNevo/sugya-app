@@ -1,16 +1,20 @@
 /* src/App.css */
 
-/* הגדרות בסיס וצבעים */
+/* הגדרות בסיס וצבעים - Apple-inspired */
 :root {
-  --background-color: #FAFAFA;
-  --text-color: #2D2D2D;
-  --primary-color: #4A90E2;
-  --user-bubble-color: #E3F2FD;
-  --ai-bubble-color: #FFFFFF;
-  --border-color: #E0E0E0;
+  --background-color: #F2F2F7;
+  --text-color: #1D1D1F;
+  --text-secondary: #86868B;
+  --primary-color: #007AFF;
+  --user-bubble-color: #007AFF;
+  --ai-bubble-color: #F2F2F7;
+  --border-color: #D1D1D6;
   --input-bg: #FFFFFF;
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --card-bg: #FFFFFF;
+  --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --border-radius: 12px;
+  --font-main: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
 }
 
 /* איפוס ועיצוב כללי */
@@ -26,6 +30,9 @@ body {
   font-family: var(--font-main);
   overscroll-behavior: none;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-weight: 400;
+  line-height: 1.5;
 }
 
 /* מבנה האפליקציה */
@@ -41,20 +48,22 @@ body {
 }
 
 .app-header {
-  padding: 1rem;
-  background: white;
-  border-bottom: 1px solid var(--border-color);
-  box-shadow: var(--shadow);
+  padding: 1.25rem 1rem 1rem 1rem;
+  background: var(--card-bg);
+  border-bottom: 0.5px solid var(--border-color);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   z-index: 10;
   flex-shrink: 0;
 }
 
 .app-header h1 {
-  font-size: 1.25rem;
+  font-size: 1.375rem;
   font-weight: 600;
   text-align: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
   color: var(--text-color);
+  letter-spacing: -0.01em;
 }
 
 /* בורר הדמויות */
@@ -67,36 +76,44 @@ body {
 
 .persona-selector button {
   font-size: 0.9rem;
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border-color);
+  padding: 0.5rem 1.25rem;
+  border: none;
   border-radius: 20px;
-  background-color: white;
+  background-color: var(--ai-bubble-color);
   color: var(--text-color);
   cursor: pointer;
-  transition: all 0.2s ease;
-  min-height: 40px;
+  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  min-height: 36px;
   font-weight: 500;
+  letter-spacing: -0.005em;
+  box-shadow: var(--shadow-light);
 }
 
 .persona-selector button:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
+  background-color: #E5E5EA;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-medium);
 }
 
 .persona-selector button.active {
   background-color: var(--primary-color);
   color: white;
-  border-color: var(--primary-color);
+  box-shadow: 0 2px 12px rgba(0, 122, 255, 0.3);
+}
+
+.persona-selector button:active {
+  transform: translateY(0);
+  transition: all 0.1s ease;
 }
 
 /* חלון הצ'אט */
 .chat-window {
   flex-grow: 1;
   overflow-y: auto;
-  padding: 0.75rem;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
 }
@@ -104,17 +121,18 @@ body {
 .message-wrapper {
   display: flex;
   flex-direction: column;
-  max-width: 90%;
+  max-width: 80%;
   align-self: flex-start;
-  animation: slideIn 0.3s ease-out;
+  animation: slideIn 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 .message {
-  padding: 0.75rem 1rem;
-  border-radius: 12px;
-  line-height: 1.5;
+  padding: 0.875rem 1.125rem;
+  border-radius: var(--border-radius);
+  line-height: 1.47;
   font-size: 1rem;
   word-wrap: break-word;
+  letter-spacing: -0.003em;
 }
 
 @keyframes slideIn {
@@ -137,8 +155,9 @@ body {
   align-self: flex-end;
 }
 .user-message .message {
-  background-color: var(--primary-color);
+  background-color: var(--user-bubble-color);
   color: white;
+  box-shadow: 0 1px 3px rgba(0, 122, 255, 0.2);
 }
 
 .ai-message {
@@ -146,8 +165,8 @@ body {
 }
 .ai-message .message {
   background-color: var(--ai-bubble-color);
-  border: 1px solid var(--border-color);
   color: var(--text-color);
+  box-shadow: var(--shadow-light);
 }
 
 .persona-tag {
@@ -159,16 +178,18 @@ body {
 
 /* טופס השליחה */
 .chat-form-wrapper {
-  padding: 0.875rem 1rem;
-  padding-bottom: max(0.875rem, env(safe-area-inset-bottom));
-  border-top: 1px solid var(--border-color);
-  background-color: var(--background-color);
+  padding: 1rem;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  border-top: 0.5px solid var(--border-color);
+  background-color: var(--card-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   flex-shrink: 0;
 }
 
 .chat-form {
   display: flex;
-  gap: 0.625rem;
+  gap: 0.75rem;
   max-width: 600px;
   margin: 0 auto;
   align-items: flex-end;
@@ -176,46 +197,61 @@ body {
 
 .chat-form input {
   flex-grow: 1;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
+  padding: 0.875rem 1.125rem;
+  border: 0.5px solid var(--border-color);
+  border-radius: 25px;
   font-size: 1rem;
   font-family: var(--font-main);
   background-color: var(--input-bg);
   color: var(--text-color);
-  transition: border-color 0.2s ease;
-  min-height: 48px;
+  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  min-height: 50px;
+  box-shadow: var(--shadow-light);
+  letter-spacing: -0.003em;
 }
 
 .chat-form input:focus {
   outline: none;
   border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+  transform: translateY(-1px);
 }
 
 .chat-form input::placeholder {
-  color: #999;
+  color: var(--text-secondary);
 }
 
 .chat-form button {
-  padding: 0.75rem 1.25rem;
+  padding: 0.875rem 1.5rem;
   border: none;
-  border-radius: 20px;
+  border-radius: 25px;
   background-color: var(--primary-color);
   color: white;
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s ease;
-  min-height: 48px;
+  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  min-height: 50px;
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+  letter-spacing: -0.003em;
 }
 
 .chat-form button:hover:not(:disabled) {
-  background-color: #3A7BC8;
+  background-color: #0056D2;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 122, 255, 0.4);
+}
+
+.chat-form button:active:not(:disabled) {
+  transform: translateY(0);
+  transition: all 0.1s ease;
 }
 
 .chat-form button:disabled {
-  background-color: #ccc;
+  background-color: var(--text-secondary);
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* אנימציית טעינה */
@@ -233,24 +269,48 @@ body {
 /* Mobile responsive design */
 @media (max-width: 768px) {
   .app-header {
-    padding: 0.75rem;
+    padding: 1rem 0.875rem 0.875rem 0.875rem;
   }
   
   .app-header h1 {
-    font-size: 1.1rem;
-    margin-bottom: 0.75rem;
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
   }
   
   .persona-selector {
     gap: 0.5rem;
   }
   
+  .persona-selector button {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+  
   .chat-window {
-    padding: 0.5rem;
+    padding: 0.75rem;
+    gap: 0.875rem;
+  }
+  
+  .message-wrapper {
+    max-width: 85%;
   }
   
   .chat-form-wrapper {
-    padding: 0.75rem;
-    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+    padding: 0.875rem;
+    padding-bottom: max(0.875rem, env(safe-area-inset-bottom));
+  }
+  
+  .chat-form {
+    gap: 0.625rem;
+  }
+  
+  .chat-form input {
+    min-height: 46px;
+    padding: 0.75rem 1rem;
+  }
+  
+  .chat-form button {
+    min-height: 46px;
+    padding: 0.75rem 1.25rem;
   }
 }
